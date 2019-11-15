@@ -1,0 +1,131 @@
+---
+title: "Campus Building Efficiency just Ele and Gas"
+author: "Maoloud"
+date: "Feb 04, 2019"
+output:
+  html_document: default
+---
+
+
+```{r}
+# The libraries
+
+library("pander", quietly=TRUE)
+library(MultiplierDEA)
+library(Benchmarking)
+library(DJL)
+library (dplyr)
+library(pastecs)
+library(DiagrammeR)
+library(ggplot2)
+library(plotly)
+
+library(TRA)
+```
+
+```{r}
+# Data
+mydataset <- read.csv("CSO_Buildings_Data_New.csv", header = TRUE)
+pander(head(mydataset), caption="Sample of PSU Campus Buildings dataset")
+```
+
+```{r}
+Stat_Summ <- dplyr::select(mydataset, Electricity, Gas, Operatinghours, SQFT, Weighted_Area)
+Summ <- stat.desc(Stat_Summ)
+pander((Summ), caption="Statistical Summary of the Dataset")
+```
+
+
+```{r}
+## Drawing the diagram
+
+XFigNames <- c("I1 (Electricity Usage)", "I2 (Gas Usage)")  
+YFigNames <- c("O1 (Operating Hours)", "O2 (SQFT)", "O3 (Weighted Area)")
+
+Figure_1<-DrawIOdiagram(XFigNames,YFigNames, '"\n\nPSU_Campus Buildings Eff\n\n "' )
+Figure_1
+```
+
+
+
+
+```{r}
+# CRS-Input-oriented results
+
+inputs <- c("Electricity", "Gas")
+outputs <- c("Operatinghours", "SQFT", "Weighted_Area")
+
+
+x <- mydataset %>% select(Electricity, Gas)
+  row.names(x)<-mydataset[,1]
+  
+y <- mydataset %>% select(Operatinghours, SQFT, Weighted_Area)
+  row.names(y)<-mydataset[,1] 
+
+data_mult_out_CRS <- dm.dea(x, y, rts="crs", orientation="i")
+result_out_CRS <- (data_mult_out_CRS$eff)
+
+pander((result_out_CRS), caption="CRS-OUTPUT results")
+
+```
+
+```{r}
+### Drawing the results graphicaly
+
+results_CRS <- data.frame(result_out_CRS)
+plot_ly(results_CRS, x=~ result_out_CRS, type="histogram", xbins=list(end=1.01,size=.09,start=0), nbinsx=15)
+```
+
+
+
+```{r}
+### VRS-OUTPUT results 
+
+data_mult_out_VRS <- dm.dea(x, y, rts="vrs", orientation="i")
+result_out_VRS <- (data_mult_out_VRS$eff)
+pander((result_out_VRS), caption="VRS-OUTPUT results")
+
+```
+
+
+```{r, fig.height=1, fig.width=1}
+### Drawing the results graphicaly
+
+
+results_VRS <- data.frame(result_out_VRS)
+plot_ly(results_VRS, x=~ result_out_VRS, type="histogram", xbins=list(end=1.01,size=.09,start=0), nbinsx=15)
+```
+
+
+
+
+```{r}
+all_results <- data.frame(result_out_VRS, result_out_CRS )
+
+p <- plot_ly(all_results,alpha = 0.6) %>%
+  add_histogram(x=~ result_out_CRS,xbins=list(end=1.01,size=.09,start=0), nbinsx=10) %>%
+  add_histogram(x=~ result_out_VRS,xbins=list(end=1.01,size=.09,start=0), nbinsx=10) %>%
+  layout(barmode = "overlay")
+p
+```
+
+```{r}
+#### Super efficiency VRS-OUTPUT-S results 
+
+data_super_out_CRS <- dm.dea(x, y, rts="crs", orientation="i", se=TRUE)
+#result_supreff_vrs_out < (-1/data_super_out_VRS$eff)
+result_supr_Crs_out <- data.frame (sort(data_super_out_CRS$eff, decreasing = TRUE))
+pander((result_supr_Crs_out), caption="Super Eff CRS-OUTPUT results") 
+```
+
+
+
+```{r}
+#### Super efficiency VRS-OUTPUT-S results 
+
+data_super_out_VRS <- dm.dea(x, y, rts="vrs", orientation="i", se=TRUE)
+#result_supreff_vrs_out < (-1/data_super_out_VRS$eff)
+result_supr_vrs_out <- data.frame (sort(data_super_out_VRS$eff, decreasing = TRUE))
+pander((result_supr_vrs_out), caption="Super Eff VRS-OUTPUT results") 
+```
+

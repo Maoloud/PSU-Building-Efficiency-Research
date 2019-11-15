@@ -1,0 +1,131 @@
+---
+title: "Campus Building Efficiency just Ele and Gas"
+author: "Maoloud"
+date: "Feb 04, 2019"
+output:
+  html_document: default
+---
+
+
+```{r}
+# The libraries
+
+library("pander", quietly=TRUE)
+library(pastecs)
+library(DJL)
+library (dplyr)
+library(plotly)
+library(TRA)
+```
+
+```{r}
+# Data
+mydataset <- read.csv("CSO_Buildings_Data_Final.csv", header = TRUE)
+pander(head(mydataset), caption="Sample of PSU Campus Buildings dataset")
+```
+
+```{r}
+Stat_Summ <- dplyr::select(mydataset, Electricity, Gas, Operatinghours, SQFT, Weighted_Area)
+Summ <- stat.desc(Stat_Summ)
+pander((Summ), caption="Statistical Summary of the Dataset")
+```
+
+## First Model
+
+```{r}
+## Drawing the diagram
+
+XFigNames <- c("I1 (Electricity Usage)", "I2 (Gas Usage)")  
+YFigNames <- c("O1 (Operating Hours)", "O2 (SQFT)", "O3 (Weighted Area)")
+
+Figure_1<-DrawIOdiagram(XFigNames,YFigNames, '"\n\nPSU Campus Buildings Efficiency Model\n\n "' )
+Figure_1
+```
+
+```{r}
+# CRS-Input-oriented
+
+inputs <- c("Electricity", "Gas")
+outputs <- c("Operatinghours", "SQFT", "Weighted_Area")
+
+
+x <- mydataset %>% select(Electricity, Gas)
+  row.names(x)<-mydataset[,1]
+  
+y <- mydataset %>% select(Operatinghours, SQFT, Weighted_Area)
+  row.names(y)<-mydataset[,1] 
+
+data_CRS_1 <- dm.dea(x, y, rts="crs", orientation="i")
+result_CRS_1 <- (data_CRS_1$eff)
+
+results_CRS_1 <- data.frame(mydataset$Building_Acronym, result_CRS_1)
+
+```
+
+```{r}
+### Drawing the results graphicaly
+
+plot_ly(results_CRS_1, x=~ result_CRS_1, type="histogram", xbins=list(end=1.01,size=.09,start=0), nbinsx=15)
+```
+
+```{r}
+#### Super efficiency CRS-INPUT-results 
+
+data_super_CRS_1 <- dm.dea(x, y, rts="crs", orientation="i", se=TRUE)
+results_CRS_1 <- dplyr::mutate(results_CRS_1, Sup_Eff=data_super_CRS_1$eff)
+
+
+pander((results_CRS_1), caption="Super Eff CRS-INPUT results") 
+```
+
+
+### Final Model
+
+```{r}
+## Drawing the diagram
+
+XFigNames <- c("I1 (MMBTU)")  
+YFigNames <- c("O1 (Operating Hours)", "O2 (SQFT)", "O3 (Weighted Area)")
+
+Figure_2<-DrawIOdiagram(XFigNames,YFigNames, '"\n\nPSU Campus\nBuildings Efficiency\n Model\n\n "' )
+Figure_2
+```
+
+```{r}
+# CRS-Input-oriented
+
+inputs <- c("MMBTU")
+outputs <- c("Operatinghours", "SQFT", "Weighted_Area")
+
+
+x <- mydataset %>% select(MMBTU)
+  row.names(x)<-mydataset[,1]
+  
+y <- mydataset %>% select(Operatinghours, SQFT, Weighted_Area)
+  row.names(y)<-mydataset[,1] 
+
+data_CRS_2 <- dm.dea(x, y, rts="crs", orientation="i")
+result_CRS_2 <- (data_CRS_2$eff)
+
+results_CRS_2 <- data.frame(mydataset$Building_Acronym,  result_CRS_2)
+
+```
+
+```{r}
+### Drawing the results graphicaly
+
+plot_ly(results_CRS_2, x=~ result_CRS_2, type="histogram", xbins=list(end=1.01,size=.09,start=0), nbinsx=15)
+```
+
+```{r}
+#### Super efficiency CRS-OUTPUT results 
+
+data_super_CRS_2 <- dm.dea(x, y, rts="crs", orientation="i", se=TRUE)
+results_CRS_2 <- dplyr::mutate(results_CRS_2, Sup_Eff_2=data_super_CRS_2$eff)
+
+
+pander((results_CRS_2), caption="Super Eff CRS-INPUT results") 
+```
+
+
+
