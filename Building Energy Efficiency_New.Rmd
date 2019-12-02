@@ -131,7 +131,7 @@ pander((results_CRS_2), caption="Super Eff CRS-INPUT results")
 ## Third Model
 
 ```{r}
-Newdata <- mydataset[-c(16,24),]
+Newdata <- mydataset[-c(24),]
 
 pander((Newdata), caption="Sample of PSU Campus Buildings dataset_Without KMC&PNT")
 ```
